@@ -1,0 +1,143 @@
+<html>
+  <body>
+
+    <div id="login" style="display:none">
+      <form id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username"/>
+        <input type="submit" value="Login">
+      </form>
+    </div>
+    <div id="me" style="display:none">
+      <span id="me-username"></span>
+      <form id="logoutForm" style="display:inline">
+        <input type="submit" value="Logout">
+      </form>   
+    </div>
+    
+    <div id="messages" style="display:none"></div>
+  </body>
+
+  <script>
+
+class User {
+  constructor() {
+    this.me = { "username": "Anonymous" };
+  }
+
+  check() {
+    var self = this;
+    fetch("me", {
+      credentials: 'include' 
+    }).then(
+      function(response) {
+        if (response.status === 200) {
+          response.json().then(
+            function(me) {
+              self.me = me
+              self.showMe();
+            }
+          )
+        } else {
+          self.showLogin();
+        }
+      }
+    );
+  }
+
+  onLogin(form) {
+    var loginData = { 'username': form.target.elements.username.value }
+
+    var self = this;
+
+    fetch("login", {
+      method: 'post',
+      credentials: 'include',
+      body: JSON.stringify(loginData)
+    }).then(
+      function(response) {
+        if (response.status !== 200) {
+          console.log("Unable to make request", response)
+          return
+        }
+        response.json().then(
+            function(me) {
+              console.log("me", me);
+              self.me = me;
+              self.showMe();
+            }
+          )
+        
+        self.hideLogin();
+      }
+    );
+
+    return false
+  }
+
+onLogout(form) {
+    var self = this;
+
+    fetch("logout", {
+      method: 'post',
+      credentials: 'include',
+      body: JSON.stringify({})
+    }).then(
+      function(response) {
+        if (response.status !== 200) {
+          console.log("Unable to make request", response)
+          return
+        }
+        response.json().then(
+            function(me) {
+              me = { 'username': "Anonymous"}
+            }
+          )
+        
+        self.hideMe();
+        self.showLogin();
+      }
+    );
+
+    return false
+  }
+
+  showMe() {
+    var div = document.getElementById("me");
+    div.style.display = "block";
+    document.getElementById("me-username").innerText = this.me.username;
+
+    var self = this;
+    document.getElementById("logoutForm").onsubmit = function(form) {
+      self.onLogout(form);
+      return false;
+    }
+  }
+
+  hideMe() {
+    var div = document.getElementById("me");
+    div.style.display = "none";
+  }
+
+  showLogin() {
+    console.log("login");
+    document.getElementById("login").style.display = "block";
+
+    var self = this;
+    document.getElementById("loginForm").onsubmit = function(form) {
+      self.onLogin(form);
+      return false;
+    }
+  }
+
+  hideLogin() {
+    document.getElementById("login").style.display = "none";
+  }
+}
+
+let user = new User();
+user.check();
+
+    </script>
+  </script>
+</html>
