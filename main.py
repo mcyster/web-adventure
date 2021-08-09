@@ -10,9 +10,9 @@ app.config['SESSION_TYPE'] = 'filesystem'
 
 assets = os.path.join(os.getcwd(), "assets")
 
-messages = [ { "username": "God", "message": "Welcome" } ];
+messages = [ { "id": 0, "username": "God", "message": "Welcome" } ];
 
-@app.route('/messages.json')
+@app.route('/messages')
 def getMessages():
   return json.dumps(messages)
 
@@ -44,15 +44,17 @@ def sendMessage():
     
   return redirect("/")
 
-
-
 @app.route('/login', methods=['POST'])
 def login():
   print("login", request.data)
 
-  user = { "username": "aaa" }
-  if user:
-    session['me'] = user
+  content = request.get_json(force = True)
+  if "username" in content:
+    user = { "username": content['username'] }
+  else:
+    user = { "username": "Anonymous" }  
+
+  session['me'] = user
     
   return json.dumps(user)
 

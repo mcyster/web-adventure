@@ -1,6 +1,6 @@
 <html>
   <body>
-
+    <div id="error"></div>
     <div id="login" style="display:none">
       <form id="loginForm">
         <label for="username">Username:</label>
@@ -15,10 +15,39 @@
       </form>   
     </div>
     
-    <div id="messages" style="display:none"></div>
+    <div id="messages" style="display:none">
+      <div id="message">
+        <span class="message-username"></span> 
+        <span class="message-content"></span>
+      </div>
+    </div>
+
+    <div id="message-send">
+    </div>
   </body>
 
   <script>
+
+class ErrorMessage {
+  constructor(error) {
+    this.error = error;
+  }
+
+  showError() {
+    var div = document.getElementById("error");
+    div.style.display = "block";
+    div.innerText = this.error;
+
+    var self = this;
+    setTimeout(function() { self.hideError()}, 5000)
+  }
+
+  hideError() {
+    var div = document.getElementById("error");
+    div.style.display = "none";
+    div.innerText = "Ok"
+  }
+}
 
 class User {
   constructor() {
@@ -57,12 +86,11 @@ class User {
     }).then(
       function(response) {
         if (response.status !== 200) {
-          console.log("Unable to make request", response)
+          new ErrorMessage("Unable to login / talk to server.").showError();
           return
         }
         response.json().then(
             function(me) {
-              console.log("me", me);
               self.me = me;
               self.showMe();
             }
@@ -85,7 +113,7 @@ onLogout(form) {
     }).then(
       function(response) {
         if (response.status !== 200) {
-          console.log("Unable to make request", response)
+          new ErrorMessage("Unable to logout / talk to server").showError();
           return
         }
         response.json().then(
@@ -120,7 +148,6 @@ onLogout(form) {
   }
 
   showLogin() {
-    console.log("login");
     document.getElementById("login").style.display = "block";
 
     var self = this;
@@ -133,10 +160,68 @@ onLogout(form) {
   hideLogin() {
     document.getElementById("login").style.display = "none";
   }
+
+  
+}
+
+
+class Messages {
+  constructor() {
+    this.message = [];
+    this.shownLength = 0;
+  }
+
+  check() {
+    self = this;
+    setInterval(function() {
+      self.fetchMessages()
+    }, 1000)
+  }
+
+  fetchMessages() {
+    fetch("messages", {
+      credentials: 'include',
+    }).then(
+      function(response) {
+        if (response.status !== 200) {
+          new ErrorMessage("Unable to fetch messages / talk to server").showError();
+          return
+        }
+        response.json().then(
+            function(messages) {
+              self.messages = messages;
+              self.showMessages();
+            }
+          )
+      }
+    );
+  }
+
+  showMessages() {
+    var messagesDiv = document.getElementById("messages")
+    messagesDiv.style.display = "block";
+
+    for(var index = this.shownLength; index < this.messages.length; index++) {
+      document.getElementById("messages").style.display = "block";
+      var messageTemplateElement = document.getElementById("message");
+      var messageElement = messageTemplateElement.cloneNode(true);
+      messageElement.id = "message-" + message.id;
+      
+      messageElement.getElementsByClassName("message-username")[0].innerText = this.messages[index].username;
+
+      messageElement.getElementsByClassName("message-content")[0].innerText = this.messages[index].message;
+
+      messagesDiv.appendChild(messageElement);
+      this.shownLength = index + 1;
+    }
+
+  }
 }
 
 let user = new User();
 user.check();
+let messages = new Messages();
+messages.check();
 
     </script>
   </script>
